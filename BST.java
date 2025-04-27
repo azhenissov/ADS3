@@ -3,8 +3,28 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Stack;
 
-public class BST<K extends Comparable<K>, V> {
+public class BST<K extends Comparable<K>, V> implements Iterable<BST.Entry<K, V>> {
     private Node root;
+    private int size;  // Added size field to track number of nodes
+
+    // Static Entry class to hold both key and value for iteration
+    public static class Entry<K, V> {
+        private final K key;
+        private final V value;
+
+        public Entry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public K getKey() {
+            return key;
+        }
+
+        public V getValue() {
+            return value;
+        }
+    }
 
     private class Node {
         private K key;
@@ -17,6 +37,22 @@ public class BST<K extends Comparable<K>, V> {
         }
     }
 
+    // Constructor
+    public BST() {
+        root = null;
+        size = 0;
+    }
+
+    // Size method
+    public int size() {
+        return size;
+    }
+
+    // Check if tree is empty
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
     public void put(K key, V val) {
         if (key == null) throw new IllegalArgumentException("Key cannot be null");
         if (val == null) {
@@ -27,6 +63,7 @@ public class BST<K extends Comparable<K>, V> {
         // If tree is empty, create root
         if (root == null) {
             root = new Node(key, val);
+            size++;
             return;
         }
 
@@ -42,7 +79,7 @@ public class BST<K extends Comparable<K>, V> {
             } else if (cmp > 0) {
                 current = current.right;
             } else {
-                // Key already exists, update value
+                // Key already exists, update value without changing size
                 current.val = val;
                 return;
             }
@@ -57,6 +94,8 @@ public class BST<K extends Comparable<K>, V> {
         } else {
             parent.right = newNode;
         }
+
+        size++; // Increment size after adding new node
     }
 
     public V get(K key) {
@@ -163,23 +202,23 @@ public class BST<K extends Comparable<K>, V> {
                 parent.right = successor;
             }
         }
+
+        size--; // Decrease size after removing node
     }
 
-    public Iterable<K> iterator() {
-        return new Iterable<K>() {
-            @Override
-            public Iterator<K> iterator() {
-                return new BSTIterator();
-            }
-        };
+    // Implement Iterable interface - returns iterator for Entry objects
+    @Override
+    public Iterator<Entry<K, V>> iterator() {
+        return new BSTIterator();
     }
 
-    private class BSTIterator implements Iterator<K> {
-        private ArrayList<K> keys;
+    // Iterator that provides access to both key and value
+    private class BSTIterator implements Iterator<Entry<K, V>> {
+        private ArrayList<Entry<K, V>> entries;
         private int index;
 
         public BSTIterator() {
-            keys = new ArrayList<>();
+            entries = new ArrayList<>();
 
             // Perform inorder traversal iteratively
             if (root != null) {
@@ -195,7 +234,9 @@ public class BST<K extends Comparable<K>, V> {
 
                     // Current is null at this point
                     current = stack.pop();
-                    keys.add(current.key);
+
+                    // Add both key and value as Entry
+                    entries.add(new Entry<>(current.key, current.val));
 
                     // Move to the right subtree
                     current = current.right;
@@ -207,13 +248,13 @@ public class BST<K extends Comparable<K>, V> {
 
         @Override
         public boolean hasNext() {
-            return index < keys.size();
+            return index < entries.size();
         }
 
         @Override
-        public K next() {
+        public Entry<K, V> next() {
             if (!hasNext()) throw new NoSuchElementException();
-            return keys.get(index++);
+            return entries.get(index++);
         }
     }
 }
